@@ -1,6 +1,6 @@
-openai
 chromadb
 PyMuPDF
 tqdm
 python-dotenv
 langchain
+google-generativeai

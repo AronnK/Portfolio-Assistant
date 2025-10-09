@@ -1,7 +1,7 @@
 "use client";
 import React, { FC, useState } from "react";
 import { useDropzone, Accept } from "react-dropzone";
-import { parseResumeOnClient, ParsedResumeData } from "@/utils/resumeParser";
+import { ParsedResumeData } from "@/app/types";
 
 interface ResumeDropzoneProps {
   onParsed: (data: ParsedResumeData, originalFile: File) => void;
@@ -17,21 +17,26 @@ export const ResumeDropzone: FC<ResumeDropzoneProps> = ({ onParsed }) => {
 
     setIsLoading(true);
     setError(null);
+    const formData = new FormData();
+    formData.append("resume", file);
 
     try {
-      const parsedData = await parseResumeOnClient(file);
-      if (Object.keys(parsedData).length === 0) {
-        setError(
-          "Could not find any standard sections (Projects, Education, etc.) in the resume. Please try a different format."
-        );
-        return;
+      const response = await fetch("http://127.0.0.1:5001/api/parse-resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
       }
+
+      const parsedData: ParsedResumeData = await response.json();
       onParsed(parsedData, file);
     } catch (err) {
       setError(
-        "Failed to parse the PDF file. Please ensure it is a valid, text-based PDF."
+        "Failed to parse the PDF via the backend. Is the server running?"
       );
-      console.error("Error parsing resume on client:", err);
+      console.error("Error parsing resume via backend:", err);
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +62,7 @@ export const ResumeDropzone: FC<ResumeDropzoneProps> = ({ onParsed }) => {
       >
         <input {...getInputProps()} />
         {isLoading ? (
-          <p className="text-gray-600">Analyzing your resume...</p>
+          <p className="text-gray-600">Analyzing your resume with AI...</p>
         ) : isDragActive ? (
           <p className="text-blue-600">Drop the file here ...</p>
         ) : (

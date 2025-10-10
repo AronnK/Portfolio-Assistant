@@ -1,19 +1,53 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
-import { EnrichmentForm } from "@/components/EnrichmentForm";
+import { AnimatePresence } from "framer-motion";
 import { ParsedResumeData } from "@/app/types";
-import { ChatPreview } from "../components/ChatPreview";
+import { useTheme } from "./hooks/useTheme";
+import { PageContainer } from "@/components/layout/container";
+import { StepHeader } from "@/components/StepHeader";
+import { EnrichmentForm } from "../components/enrichmentForm";
+import { ChatPreview } from "../components/chatPreview";
+import { FadeIn } from "@/components/animations/FadeIn";
+import { Bot, FileText, Sparkles } from "lucide-react";
 
 const ResumeDropzone = dynamic(
   () => import("../components/dropResume").then((mod) => mod.ResumeDropzone),
   { ssr: false }
 );
 
+const STEPS = {
+  UPLOAD: {
+    step: 1,
+    title: "Upload Resume",
+    icon: FileText,
+    description: "Upload your resume to get started",
+  },
+  ENRICH: {
+    step: 2,
+    title: "Knowledge Enrichment",
+    icon: Sparkles,
+    description: "Add context to make your assistant smarter",
+  },
+  PREVIEW: {
+    step: 3,
+    title: "Your Assistant is Live",
+    icon: Bot,
+    description: "Test and deploy your AI assistant",
+  },
+};
+
 export default function Home() {
   const [parsedData, setParsedData] = useState<ParsedResumeData | null>(null);
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [chatbotId, setChatbotId] = useState<string | null>(null);
+  const { isDark, toggleTheme } = useTheme();
+
+  const currentStepInfo = chatbotId
+    ? STEPS.PREVIEW
+    : parsedData
+    ? STEPS.ENRICH
+    : STEPS.UPLOAD;
 
   const handleParseComplete = (data: ParsedResumeData, file: File) => {
     setParsedData(data);
@@ -24,37 +58,42 @@ export default function Home() {
     setChatbotId(id);
   };
 
-  const getHeaderText = () => {
-    if (chatbotId) return "Preview Your New Assistant!";
-    if (parsedData) return "Enrich Your Bot's Knowledge";
-    return "Upload Your Resume to Get Started";
-  };
-
   const renderContent = () => {
     if (chatbotId) {
-      return <ChatPreview chatbotId={chatbotId} />;
+      return <ChatPreview chatbotId={chatbotId} isDark={isDark} />;
     }
+
     if (parsedData) {
       return (
         <EnrichmentForm
           parsedData={parsedData}
           resumeFile={originalFile}
           onBotBuilt={handleBotBuilt}
+          isDark={isDark}
         />
       );
     }
-    return <ResumeDropzone onParsed={handleParseComplete} />;
+
+    return <ResumeDropzone onParsed={handleParseComplete} isDark={isDark} />;
   };
 
   return (
-    <div className="font-sans flex flex-col h-screen bg-gray-50">
-      <header className="text-center py-6 px-4 border-b bg-white shadow-sm shrink-0">
-        <h1 className="text-3xl font-bold">Create Your Portfolio Assistant</h1>
-        <p className="text-md text-gray-600 mt-1">{getHeaderText()}</p>
-      </header>
-      <main className="flex-grow overflow-y-auto p-4 sm:p-8">
-        <div className="max-w-4xl mx-auto h-full">{renderContent()}</div>
-      </main>
-    </div>
+    <PageContainer
+      isDark={isDark}
+      currentStep={currentStepInfo.step}
+      onThemeToggle={toggleTheme}
+    >
+      <StepHeader
+        step={currentStepInfo.step}
+        title={currentStepInfo.title}
+        description={currentStepInfo.description}
+        icon={currentStepInfo.icon}
+        isDark={isDark}
+      />
+
+      <AnimatePresence mode="wait">
+        <FadeIn key={currentStepInfo.step}>{renderContent()}</FadeIn>
+      </AnimatePresence>
+    </PageContainer>
   );
 }

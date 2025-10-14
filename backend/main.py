@@ -33,13 +33,12 @@ def parse_resume():
     temp_path = f"./temp_{uuid.uuid4()}.pdf"
     with open(temp_path, 'wb') as f:
         f.write(file_content)
-
     raw_text = load_parse_pdf(temp_path)
     os.remove(temp_path)
 
     print("Sending resume text to Gemini for structuring (Cache Miss)...")
     try:
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
+        model = genai.GenerativeModel("models/gemini-2.0-flash-lite")
         prompt = f"""
         You are an expert resume parser. Analyze the following resume text and convert it into a structured JSON object.
         The JSON object should have keys for sections like "EDUCATION", "PROJECTS", "SKILLS", "EXPERIENCE", "INTERNSHIPS", "HACKATHONS", "CERTIFICATIONS".
@@ -51,16 +50,12 @@ def parse_resume():
         response = model.generate_content(prompt)
         json_response_string = response.text.strip().replace("```json", "").replace("```", "").strip()
         parsed_json = json.loads(json_response_string)
-        
         parse_cache[file_hash] = parsed_json
-        
         print("Successfully parsed resume with Gemini.")
         return jsonify(parsed_json)
-
     except Exception as e:
         print(f"Error during AI parsing: {e}")
         return jsonify({"error": "Failed to parse resume using AI."}), 500
-
 
 @app.route('/api/build-bot', methods=['POST'])
 def build_bot():
@@ -108,8 +103,34 @@ def chat():
         return jsonify({"error": "Invalid chatbot_id or bot not found"}), 404
         
     answer = rag_system.answer_query(query)
-    return jsonify({"answer": answer})
+    memory_info = rag_system.get_memory_summary()
+    
+    return jsonify({"answer": answer, "memory": memory_info})
 
+@app.route('/api/chat/reset', methods=['POST'])
+def reset_chat():
+    data = request.get_json()
+    chatbot_id = data.get('chatbot_id')
+    
+    if not chatbot_id:
+        return jsonify({"error": "Missing chatbot_id"}), 400
+        
+    rag_system = rag_systems.get(chatbot_id)
+    if not rag_system:
+        return jsonify({"error": "Invalid chatbot_id or bot not found"}), 404
+    
+    rag_system.clear_memory()
+    print(f"Cleared memory for chatbot ID: {chatbot_id}")
+    return jsonify({"message": "Conversation memory cleared successfully"})
+
+@app.route('/api/chat/memory/<chatbot_id>', methods=['GET'])
+def get_memory(chatbot_id):
+    rag_system = rag_systems.get(chatbot_id)
+    if not rag_system:
+        return jsonify({"error": "Invalid chatbot_id or bot not found"}), 404
+    
+    memory_info = rag_system.get_memory_summary()
+    return jsonify(memory_info)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

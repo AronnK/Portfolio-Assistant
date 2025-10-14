@@ -1,13 +1,18 @@
 "use client";
 import { motion } from "framer-motion";
-import { Bot, RefreshCw } from "lucide-react";
+import { Bot, RefreshCw, Brain } from "lucide-react";
 
 interface ChatHeaderProps {
   isDark: boolean;
   onReset: () => void;
+  memoryInfo?: { exchanges: number; total_messages: number };
 }
 
-export const ChatHeader = ({ isDark, onReset }: ChatHeaderProps) => {
+export const ChatHeader = ({
+  isDark,
+  onReset,
+  memoryInfo,
+}: ChatHeaderProps) => {
   return (
     <div
       className={`px-6 py-4 border-b backdrop-blur-xl ${
@@ -50,6 +55,34 @@ export const ChatHeader = ({ isDark, onReset }: ChatHeaderProps) => {
               >
                 Online • Ready to help
               </p>
+              {memoryInfo && memoryInfo.exchanges > 0 && (
+                <>
+                  <span
+                    className={`text-xs ${
+                      isDark ? "text-gray-600" : "text-slate-400"
+                    }`}
+                  >
+                    •
+                  </span>
+                  <div
+                    className="flex items-center space-x-1"
+                    title={`${memoryInfo.exchanges} exchanges in memory`}
+                  >
+                    <Brain
+                      className={`w-3 h-3 ${
+                        isDark ? "text-purple-400" : "text-indigo-500"
+                      }`}
+                    />
+                    <span
+                      className={`text-xs ${
+                        isDark ? "text-gray-500" : "text-slate-500"
+                      }`}
+                    >
+                      {memoryInfo.exchanges} / 3
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

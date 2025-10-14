@@ -70,11 +70,32 @@ export const ChatPreview = ({
     setIsLoading(true);
 
     // Dummy mode
-    setTimeout(() => {
-      const randomResponse =
-        DUMMY_RESPONSES[Math.floor(Math.random() * DUMMY_RESPONSES.length)];
+    // setTimeout(() => {
+    //   const randomResponse =
+    //     DUMMY_RESPONSES[Math.floor(Math.random() * DUMMY_RESPONSES.length)];
+    //   const botMessage: Message = {
+    //     text: randomResponse,
+    //     isUser: false,
+    //     timestamp: new Date().toLocaleTimeString([], {
+    //       hour: "2-digit",
+    //       minute: "2-digit",
+    //     }),
+    //   };
+    //   setMessages((prev) => [...prev, botMessage]);
+    //   setIsLoading(false);
+    // }, 1500);
+
+    // Uncomment when backend is ready
+    try {
+      const response = await fetch("http://127.0.0.1:5001/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatbot_id: chatbotId, query: input }),
+      });
+      if (!response.ok) throw new Error("API request failed");
+      const result = await response.json();
       const botMessage: Message = {
-        text: randomResponse,
+        text: result.answer,
         isUser: false,
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -82,35 +103,20 @@ export const ChatPreview = ({
         }),
       };
       setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Chat API error:", error);
+      const errorMessage: Message = {
+        text: "Sorry, an error occurred. Please try again.",
+        isUser: false,
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
-
-    // Uncomment when backend is ready
-    // try {
-    //   const response = await fetch("http://127.0.0.1:5001/api/chat", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ chatbot_id: chatbotId, query: input }),
-    //   });
-    //   if (!response.ok) throw new Error("API request failed");
-    //   const result = await response.json();
-    //   const botMessage: Message = {
-    //     text: result.answer,
-    //     isUser: false,
-    //     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    //   };
-    //   setMessages((prev) => [...prev, botMessage]);
-    // } catch (error) {
-    //   console.error("Chat API error:", error);
-    //   const errorMessage: Message = {
-    //     text: "Sorry, an error occurred. Please try again.",
-    //     isUser: false,
-    //     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    //   };
-    //   setMessages((prev) => [...prev, errorMessage]);
-    // } finally {
-    //   setIsLoading(false);
-    // }
+    }
   };
 
   const handleReset = () => {

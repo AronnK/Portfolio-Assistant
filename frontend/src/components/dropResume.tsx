@@ -37,41 +37,41 @@ export const ResumeDropzone = ({
       setError(null);
       setUploadStatus("idle");
 
-      setTimeout(() => {
-        console.log("DUMMY MODE: Returning mock parsed data");
-        console.log("File:", file.name);
-        setIsLoading(false);
-        setUploadStatus("success");
-        setTimeout(() => onParsed(dummyResumeData, file), 500);
-      }, 2000);
-      return; // Remove this return when switching to real API
-
-      // Uncomment when backend is ready
-      // const formData = new FormData();
-      // formData.append("resume", file);
-
-      // try {
-      //   const response = await fetch("http://127.0.0.1:5001/api/parse-resume", {
-      //     method: "POST",
-      //     body: formData,
-      //   });
-
-      //   if (!response.ok) {
-      //     throw new Error(`Server responded with ${response.status}`);
-      //   }
-
-      //   const parsedData: ParsedResumeData = await response.json();
-      //   console.log("Resume parsed successfully:", parsedData);
-
+      // setTimeout(() => {
+      //   console.log("DUMMY MODE: Returning mock parsed data");
+      //   console.log("File:", file.name);
       //   setIsLoading(false);
       //   setUploadStatus("success");
-      //   setTimeout(() => onParsed(parsedData, file), 500);
-      // } catch (err) {
-      //   console.error("Error parsing resume:", err);
-      //   setError("Failed to parse the PDF. Is the server running?");
-      //   setIsLoading(false);
-      //   setUploadStatus("error");
-      // }
+      //   setTimeout(() => onParsed(dummyResumeData, file), 500);
+      // }, 2000);
+      // return; // Remove this return when switching to real API
+
+      // Uncomment when backend is ready
+      const formData = new FormData();
+      formData.append("resume", file);
+
+      try {
+        const response = await fetch("http://127.0.0.1:5001/api/parse-resume", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server responded with ${response.status}`);
+        }
+
+        const parsedData: ParsedResumeData = await response.json();
+        console.log("Resume parsed successfully:", parsedData);
+
+        setIsLoading(false);
+        setUploadStatus("success");
+        setTimeout(() => onParsed(parsedData, file), 500);
+      } catch (err) {
+        console.error("Error parsing resume:", err);
+        setError("Failed to parse the PDF. Is the server running?");
+        setIsLoading(false);
+        setUploadStatus("error");
+      }
     },
     [onParsed]
   );

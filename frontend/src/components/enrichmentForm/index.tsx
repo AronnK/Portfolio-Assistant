@@ -35,44 +35,44 @@ export const EnrichmentForm = ({
     setIsLoading(true);
 
     //dummy mode
-    setTimeout(() => {
-      const dummyBotId = `bot_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
-      console.log("Bot built with ID:", dummyBotId);
-      console.log("Enrichments:", enrichments);
-      console.log("Parsed Data:", parsedData);
-      setIsLoading(false);
-      onBotBuilt(dummyBotId);
-    }, 2500);
-    return;
+    // setTimeout(() => {
+    //   const dummyBotId = `bot_${Date.now()}_${Math.random()
+    //     .toString(36)
+    //     .substr(2, 9)}`;
+    //   console.log("Bot built with ID:", dummyBotId);
+    //   console.log("Enrichments:", enrichments);
+    //   console.log("Parsed Data:", parsedData);
+    //   setIsLoading(false);
+    //   onBotBuilt(dummyBotId);
+    // }, 2500);
+    // return;
 
     // Uncomment this section when backend is ready
-    //   const formData = new FormData();
-    //   formData.append("resumeFile", resumeFile);
-    //   formData.append("enrichments", JSON.stringify(enrichments));
-    //   formData.append("parsedData", JSON.stringify(parsedData));
+    const formData = new FormData();
+    formData.append("resumeFile", resumeFile);
+    formData.append("enrichments", JSON.stringify(enrichments));
+    formData.append("parsedData", JSON.stringify(parsedData));
 
-    //   try {
-    //     const response = await fetch("http://127.0.0.1:5001/api/build-bot", {
-    //       method: "POST",
-    //       body: formData,
-    //     });
+    try {
+      const response = await fetch("http://127.0.0.1:5001/api/build-bot", {
+        method: "POST",
+        body: formData,
+      });
 
-    //     if (!response.ok) {
-    //       throw new Error(`API request failed: ${response.status}`);
-    //     }
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
 
-    //     const result = await response.json();
-    //     console.log("Bot built successfully:", result);
+      const result = await response.json();
+      console.log("Bot built successfully:", result);
 
-    //     setIsLoading(false);
-    //     onBotBuilt(result.chatbot_id);
-    //   } catch (error) {
-    //     console.error("Error building bot:", error);
-    //     setIsLoading(false);
-    //     alert("An error occurred while building your bot. Please try again.");
-    //   }
+      setIsLoading(false);
+      onBotBuilt(result.chatbot_id);
+    } catch (error) {
+      console.error("Error building bot:", error);
+      setIsLoading(false);
+      alert("An error occurred while building your bot. Please try again.");
+    }
   };
 
   const totalItems = Object.keys(parsedData).reduce(

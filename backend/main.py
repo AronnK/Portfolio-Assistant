@@ -95,7 +95,6 @@ def build_bot():
     print(f"Successfully built and indexed bot with ID: {chatbot_id}")
     return jsonify({"message": "Bot built successfully", "chatbot_id": chatbot_id})
 
-
 @app.route('/api/chat', methods=['POST'])
 def chat():
     data = request.get_json()

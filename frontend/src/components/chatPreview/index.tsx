@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, FC } from "react";
 import { AnimatePresence } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ChatHeader } from "./ChatHeader";
@@ -19,18 +19,10 @@ interface ChatPreviewProps {
   isDark?: boolean;
 }
 
-const DUMMY_RESPONSES = [
-  "Based on the resume, this professional has a B.Tech in Artificial Intelligence and Data Science from Panimalar Engineering College with a CGPA of 8.5. They have strong expertise in AI/ML, embedded systems, and full-stack development.",
-  "This candidate has worked on several impressive projects including an AI-powered 2048 game solver using reinforcement learning with DQN/DDQN architectures, and various 8051 microcontroller applications.",
-  "Their technical skills include Python, C#, C, Assembly Language, JavaScript, React, Next.js, and Node.js. They have experience with AI/ML frameworks, embedded programming, and modern web technologies.",
-  "The candidate has demonstrated strong problem-solving abilities through their technical interview preparation and hands-on experience with reinforcement learning, CNN architectures, and microcontroller programming.",
-  "They're actively seeking opportunities at major IT companies and have a proven track record of completing complex projects from concept to deployment.",
-];
-
-export const ChatPreview = ({
+export const ChatPreview: FC<ChatPreviewProps> = ({
   chatbotId,
   isDark = false,
-}: ChatPreviewProps) => {
+}) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       text: "Hello! I'm your AI portfolio assistant. Ask me anything about this professional's experience, skills, projects, or education!",
@@ -43,6 +35,10 @@ export const ChatPreview = ({
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [memoryInfo, setMemoryInfo] = useState({
+    exchanges: 0,
+    total_messages: 0,
+  });
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -66,34 +62,25 @@ export const ChatPreview = ({
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput("");
     setIsLoading(true);
 
-    // Dummy mode
-    // setTimeout(() => {
-    //   const randomResponse =
-    //     DUMMY_RESPONSES[Math.floor(Math.random() * DUMMY_RESPONSES.length)];
-    //   const botMessage: Message = {
-    //     text: randomResponse,
-    //     isUser: false,
-    //     timestamp: new Date().toLocaleTimeString([], {
-    //       hour: "2-digit",
-    //       minute: "2-digit",
-    //     }),
-    //   };
-    //   setMessages((prev) => [...prev, botMessage]);
-    //   setIsLoading(false);
-    // }, 1500);
-
-    // Uncomment when backend is ready
     try {
       const response = await fetch("http://127.0.0.1:5001/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatbot_id: chatbotId, query: input }),
+        body: JSON.stringify({ chatbot_id: chatbotId, query: currentInput }),
       });
+
       if (!response.ok) throw new Error("API request failed");
       const result = await response.json();
+
+      if (result.memory) {
+        setMemoryInfo(result.memory);
+        console.log(`Memory: ${result.memory.exchanges} exchanges`);
+      }
+
       const botMessage: Message = {
         text: result.answer,
         isUser: false,
@@ -119,10 +106,10 @@ export const ChatPreview = ({
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     setMessages([
       {
-        text: "Hello! I'm your AI portfolio assistant. Ask me anything about this professional's experience, skills, projects, or education!",
+        text: "Hello! I'm starting fresh. Ask me anything!",
         isUser: false,
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -130,6 +117,18 @@ export const ChatPreview = ({
         }),
       },
     ]);
+    setMemoryInfo({ exchanges: 0, total_messages: 0 });
+
+    try {
+      await fetch("http://127.0.0.1:5001/api/chat/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatbot_id: chatbotId }),
+      });
+      console.log("Conversation memory cleared on backend.");
+    } catch (error) {
+      console.error("Error resetting memory:", error);
+    }
   };
 
   return (
@@ -138,8 +137,11 @@ export const ChatPreview = ({
         isDark={isDark}
         className="flex flex-col h-[600px] overflow-hidden"
       >
-        <ChatHeader isDark={isDark} onReset={handleReset} />
-
+        <ChatHeader
+          isDark={isDark}
+          onReset={handleReset}
+          memoryInfo={memoryInfo}
+        />
         <div
           className={`flex-1 p-6 overflow-y-auto space-y-4 ${
             isDark ? "bg-slate-950/20" : "bg-white/10"
@@ -150,11 +152,9 @@ export const ChatPreview = ({
               <MessageBubble key={index} message={msg} isDark={isDark} />
             ))}
           </AnimatePresence>
-
           {isLoading && <TypingIndicator isDark={isDark} />}
           <div ref={messagesEndRef} />
         </div>
-
         <ChatInput
           value={input}
           onChange={setInput}

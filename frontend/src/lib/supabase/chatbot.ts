@@ -23,6 +23,12 @@ export interface FinalizeChatbotParams {
   projectName?: string;
 }
 
+interface ChatbotUpdatePayload {
+  collection_name?: string;
+  llm_provider?: string;
+  encrypted_api_key?: string;
+}
+
 export class ChatbotService {
   /**
    * Check if user has any existing chatbots
@@ -152,7 +158,7 @@ export class ChatbotService {
   static async updateChatbot(params: UpdateChatbotParams) {
     const supabase = createClient();
     
-    const updateData: any = {};
+    const updateData: ChatbotUpdatePayload = {};
 
     if (params.collectionName) updateData.collection_name = params.collectionName;
     if (params.llmProvider) updateData.llm_provider = params.llmProvider;

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "react-hot-toast";
+import { AppStateProvider } from "@/context/AppStateContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,38 +31,40 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
       >
         <AuthProvider>
-          {children}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: "#1e293b",
-                color: "#fff",
-                borderRadius: "12px",
-                padding: "16px",
-                fontSize: "14px",
-              },
-              success: {
-                iconTheme: {
-                  primary: "#10b981",
-                  secondary: "#fff",
+          <AppStateProvider>
+            {children}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: "#1e293b",
+                  color: "#fff",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  fontSize: "14px",
                 },
-              },
-              error: {
-                iconTheme: {
-                  primary: "#ef4444",
-                  secondary: "#fff",
+                success: {
+                  iconTheme: {
+                    primary: "#10b981",
+                    secondary: "#fff",
+                  },
                 },
-              },
-              loading: {
-                iconTheme: {
-                  primary: "#6366f1",
-                  secondary: "#fff",
+                error: {
+                  iconTheme: {
+                    primary: "#ef4444",
+                    secondary: "#fff",
+                  },
                 },
-              },
-            }}
-          />
+                loading: {
+                  iconTheme: {
+                    primary: "#6366f1",
+                    secondary: "#fff",
+                  },
+                },
+              }}
+            />
+          </AppStateProvider>
         </AuthProvider>
       </body>
     </html>

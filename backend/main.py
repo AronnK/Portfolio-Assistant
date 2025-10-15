@@ -122,11 +122,92 @@ def parse_resume():
         print(f"Error during AI parsing: {e}")
         return jsonify({"error": f"Failed to parse resume using AI: {e}"}), 500
 
+# @app.route('/api/build-bot', methods=['POST'])
+# def build_bot():
+#     if 'resumeFile' not in request.files:
+#         return jsonify({"error": "No resume file provided"}), 400
+    
+#     try:
+#         provider_name = request.form.get('provider_name', 'google')
+#         api_key = request.form.get('api_key') or os.getenv("GOOGLE_API_KEY")
+#         temp_collection_name = f"temp-{uuid.uuid4()}"
+#         enrichments = json.loads(request.form.get('enrichments', '{}'))
+#         parsed_data = json.loads(request.form.get('parsedData', '{}'))
+
+#         full_text_content = ""
+        
+#         if 'personal_details' in parsed_data and isinstance(parsed_data['personal_details'], dict):
+#             pd = parsed_data['personal_details']
+#             full_text_content += "PERSONAL DETAILS:\n"
+#             if pd.get('name'): 
+#                 full_text_content += f"Name: {pd['name']}\n"
+#             if pd.get('email'): 
+#                 full_text_content += f"Email: {pd['email']}\n"
+#             if pd.get('phone'): 
+#                 full_text_content += f"Phone: {pd['phone']}\n"
+#             if pd.get('links') and isinstance(pd['links'], list):
+#                 for link in pd['links']:
+#                     if isinstance(link, dict):
+#                         full_text_content += f"{link.get('type', 'Link').title()}: {link.get('url', '')}\n"
+        
+#         if 'summary' in parsed_data and isinstance(parsed_data['summary'], str):
+#             full_text_content += f"\nPROFESSIONAL SUMMARY:\n{parsed_data['summary']}\n"
+
+#         for section, items in parsed_data.items():
+#             if not isinstance(items, list):
+#                 continue
+            
+#             if len(items) == 0:
+#                 continue
+                
+#             full_text_content += f"\n\n=== {section.upper()} ===\n"
+            
+#             for i, item in enumerate(items):
+#                 if not isinstance(item, dict):
+#                     continue
+                
+#                 item_key = f"{section}-{i}"
+                
+#                 full_text_content += f"\n--- Entry {i+1} ---\n"
+#                 full_text_content += f"Title: {item.get('title', 'N/A')}\n"
+                
+#                 if item.get('subtitle'): 
+#                     full_text_content += f"Organization/Institution: {item.get('subtitle')}\n"
+#                 if item.get('date'): 
+#                     full_text_content += f"Duration: {item.get('date')}\n"
+#                 if item.get('description'): 
+#                     full_text_content += f"Description: {item.get('description')}\n"
+                
+#                 if enrichments.get(item_key):
+#                     full_text_content += f"Additional Context: {enrichments[item_key]}\n"
+        
+#         all_chunks = chunkify_text(full_text_content)
+#         rag_system = Rag(
+#             collection_name=temp_collection_name, 
+#             provider_name=provider_name, 
+#             api_key=api_key
+#         )
+#         rag_system.set_doc_pipeline(chunks=all_chunks)
+        
+#         print(f"Bot built successfully: {temp_collection_name}")
+#         return jsonify({
+#             "message": "Temporary bot built successfully", 
+#             "collection_name": temp_collection_name
+#         })
+        
+#     except Exception as e:
+#         print(f"Error building bot: {str(e)}")
+#         import traceback
+#         traceback.print_exc()
+#         return jsonify({"error": f"Failed to build bot: {str(e)}"}), 500
+
+
 @app.route('/api/build-bot', methods=['POST'])
 def build_bot():
-    if 'resumeFile' not in request.files:
-        return jsonify({"error": "No resume file provided"}), 400
-    
+    """
+    Builds a bot in a TEMPORARY collection, using detailed text formatting,
+    and returns the temporary collection name.
+    """
     try:
         provider_name = request.form.get('provider_name', 'google')
         api_key = request.form.get('api_key') or os.getenv("GOOGLE_API_KEY")
@@ -139,44 +220,34 @@ def build_bot():
         if 'personal_details' in parsed_data and isinstance(parsed_data['personal_details'], dict):
             pd = parsed_data['personal_details']
             full_text_content += "PERSONAL DETAILS:\n"
-            if pd.get('name'): 
-                full_text_content += f"Name: {pd['name']}\n"
-            if pd.get('email'): 
-                full_text_content += f"Email: {pd['email']}\n"
-            if pd.get('phone'): 
-                full_text_content += f"Phone: {pd['phone']}\n"
+            if pd.get('name'): full_text_content += f"Name: {pd['name']}\n"
+            if pd.get('email'): full_text_content += f"Email: {pd['email']}\n"
+            if pd.get('phone'): full_text_content += f"Phone: {pd['phone']}\n"
             if pd.get('links') and isinstance(pd['links'], list):
                 for link in pd['links']:
                     if isinstance(link, dict):
                         full_text_content += f"{link.get('type', 'Link').title()}: {link.get('url', '')}\n"
         
         if 'summary' in parsed_data and isinstance(parsed_data['summary'], str):
-            full_text_content += f"\nPROFESSIONAL SUMMARY:\n{parsed_data['summary']}\n"
+            full_text_content += f"\n\n=== PROFESSIONAL SUMMARY ===\n{parsed_data['summary']}\n"
 
         for section, items in parsed_data.items():
-            if not isinstance(items, list):
-                continue
-            
-            if len(items) == 0:
+            if section.lower() in ['personal_details', 'summary'] or not isinstance(items, list) or not items:
                 continue
                 
             full_text_content += f"\n\n=== {section.upper()} ===\n"
             
             for i, item in enumerate(items):
-                if not isinstance(item, dict):
-                    continue
-                
                 item_key = f"{section}-{i}"
-                
                 full_text_content += f"\n--- Entry {i+1} ---\n"
-                full_text_content += f"Title: {item.get('title', 'N/A')}\n"
-                
-                if item.get('subtitle'): 
-                    full_text_content += f"Organization/Institution: {item.get('subtitle')}\n"
-                if item.get('date'): 
-                    full_text_content += f"Duration: {item.get('date')}\n"
-                if item.get('description'): 
-                    full_text_content += f"Description: {item.get('description')}\n"
+
+                if isinstance(item, dict):
+                    full_text_content += f"Title: {item.get('title', 'N/A')}\n"
+                    if item.get('subtitle'): full_text_content += f"Organization/Institution: {item.get('subtitle')}\n"
+                    if item.get('date'): full_text_content += f"Duration: {item.get('date')}\n"
+                    if item.get('description'): full_text_content += f"Description: {item.get('description')}\n"
+                elif isinstance(item, str):
+                    full_text_content += f"Skill/Item: {item}\n"
                 
                 if enrichments.get(item_key):
                     full_text_content += f"Additional Context: {enrichments[item_key]}\n"

@@ -162,15 +162,15 @@ export const EnrichmentForm = ({
   };
 
   const handleBuildBot = async () => {
-    if (!resumeFile) {
-      setError("Resume file is missing!");
-      return;
-    }
+    // if (!resumeFile) {
+    //   setError("Resume file is missing!");
+    //   return;
+    // }
     setIsLoading(true);
     setError(null);
 
     const formData = new FormData();
-    formData.append("resumeFile", resumeFile);
+    // formData.append("resumeFile", resumeFile);
     formData.append("enrichments", JSON.stringify(enrichments));
     formData.append("parsedData", JSON.stringify(parsedData));
     formData.append("provider_name", "google");

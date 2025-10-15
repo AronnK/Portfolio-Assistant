@@ -1,3 +1,172 @@
+// "use client";
+// import { useState, useRef, useEffect, FC } from "react";
+// import { AnimatePresence } from "framer-motion";
+// import { GlassCard } from "@/components/ui/GlassCard";
+// import { ChatHeader } from "./ChatHeader";
+// import { MessageBubble } from "./MessageBubble";
+// import { TypingIndicator } from "./TypingIndicator";
+// import { ChatInput } from "./ChatInput";
+// import { FadeIn } from "@/components/animations/FadeIn";
+
+// interface Message {
+//   text: string;
+//   isUser: boolean;
+//   timestamp?: string;
+// }
+
+// interface ChatPreviewProps {
+//   chatbotId: string;
+//   isDark?: boolean;
+// }
+
+// export const ChatPreview: FC<ChatPreviewProps> = ({
+//   chatbotId,
+//   isDark = false,
+// }) => {
+//   const [messages, setMessages] = useState<Message[]>([
+//     {
+//       text: "Hello! I'm your AI portfolio assistant. Ask me anything about this professional's experience, skills, projects, or education!",
+//       isUser: false,
+//       timestamp: new Date().toLocaleTimeString([], {
+//         hour: "2-digit",
+//         minute: "2-digit",
+//       }),
+//     },
+//   ]);
+//   const [input, setInput] = useState("");
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [memoryInfo, setMemoryInfo] = useState({
+//     exchanges: 0,
+//     total_messages: 0,
+//   });
+//   const messagesEndRef = useRef<null | HTMLDivElement>(null);
+
+//   const scrollToBottom = () => {
+//     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+//   };
+
+//   useEffect(() => {
+//     scrollToBottom();
+//   }, [messages, isLoading]);
+
+//   const handleSendMessage = async () => {
+//     if (!input.trim() || isLoading) return;
+
+//     const userMessage: Message = {
+//       text: input,
+//       isUser: true,
+//       timestamp: new Date().toLocaleTimeString([], {
+//         hour: "2-digit",
+//         minute: "2-digit",
+//       }),
+//     };
+
+//     setMessages((prev) => [...prev, userMessage]);
+//     const currentInput = input;
+//     setInput("");
+//     setIsLoading(true);
+
+//     try {
+//       const response = await fetch("http://127.0.0.1:5001/api/chat", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ chatbot_id: chatbotId, query: currentInput }),
+//       });
+
+//       if (!response.ok) throw new Error("API request failed");
+//       const result = await response.json();
+
+//       if (result.memory) {
+//         setMemoryInfo(result.memory);
+//         console.log(`Memory: ${result.memory.exchanges} exchanges`);
+//       }
+
+//       const botMessage: Message = {
+//         text: result.answer,
+//         isUser: false,
+//         timestamp: new Date().toLocaleTimeString([], {
+//           hour: "2-digit",
+//           minute: "2-digit",
+//         }),
+//       };
+//       setMessages((prev) => [...prev, botMessage]);
+//     } catch (error) {
+//       console.error("Chat API error:", error);
+//       const errorMessage: Message = {
+//         text: "Sorry, an error occurred. Please try again.",
+//         isUser: false,
+//         timestamp: new Date().toLocaleTimeString([], {
+//           hour: "2-digit",
+//           minute: "2-digit",
+//         }),
+//       };
+//       setMessages((prev) => [...prev, errorMessage]);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   const handleReset = async () => {
+//     setMessages([
+//       {
+//         text: "Hello! I'm starting fresh. Ask me anything!",
+//         isUser: false,
+//         timestamp: new Date().toLocaleTimeString([], {
+//           hour: "2-digit",
+//           minute: "2-digit",
+//         }),
+//       },
+//     ]);
+//     setMemoryInfo({ exchanges: 0, total_messages: 0 });
+
+//     try {
+//       await fetch("http://127.0.0.1:5001/api/chat/reset", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ chatbot_id: chatbotId }),
+//       });
+//       console.log("Conversation memory cleared on backend.");
+//     } catch (error) {
+//       console.error("Error resetting memory:", error);
+//     }
+//   };
+
+//   return (
+//     <FadeIn>
+//       <GlassCard
+//         isDark={isDark}
+//         className="flex flex-col h-[600px] overflow-hidden"
+//       >
+//         <ChatHeader
+//           isDark={isDark}
+//           onReset={handleReset}
+//           memoryInfo={memoryInfo}
+//         />
+//         <div
+//           className={`flex-1 p-6 overflow-y-auto space-y-4 ${
+//             isDark ? "bg-slate-950/20" : "bg-white/10"
+//           }`}
+//         >
+//           <AnimatePresence mode="popLayout">
+//             {messages.map((msg, index) => (
+//               <MessageBubble key={index} message={msg} isDark={isDark} />
+//             ))}
+//           </AnimatePresence>
+//           {isLoading && <TypingIndicator isDark={isDark} />}
+//           <div ref={messagesEndRef} />
+//         </div>
+//         <ChatInput
+//           value={input}
+//           onChange={setInput}
+//           onSend={handleSendMessage}
+//           isLoading={isLoading}
+//           isDark={isDark}
+//         />
+//       </GlassCard>
+//     </FadeIn>
+//   );
+// };
+
 "use client";
 import { useState, useRef, useEffect, FC } from "react";
 import { AnimatePresence } from "framer-motion";
@@ -17,11 +186,15 @@ interface Message {
 interface ChatPreviewProps {
   chatbotId: string;
   isDark?: boolean;
+  isTemporary?: boolean;
+  onFinalize?: (provider: string, apiKey: string) => void;
 }
 
 export const ChatPreview: FC<ChatPreviewProps> = ({
   chatbotId,
   isDark = false,
+  isTemporary = false,
+  onFinalize,
 }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -70,7 +243,12 @@ export const ChatPreview: FC<ChatPreviewProps> = ({
       const response = await fetch("http://127.0.0.1:5001/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatbot_id: chatbotId, query: currentInput }),
+        body: JSON.stringify({
+          collection_name: chatbotId,
+          query: currentInput,
+          provider_name: "google",
+          api_key: "",
+        }),
       });
 
       if (!response.ok) throw new Error("API request failed");
@@ -119,16 +297,8 @@ export const ChatPreview: FC<ChatPreviewProps> = ({
     ]);
     setMemoryInfo({ exchanges: 0, total_messages: 0 });
 
-    try {
-      await fetch("http://127.0.0.1:5001/api/chat/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatbot_id: chatbotId }),
-      });
-      console.log("Conversation memory cleared on backend.");
-    } catch (error) {
-      console.error("Error resetting memory:", error);
-    }
+    // Note: We don't have a reset endpoint for collection-based chat yet
+    // Can add later if needed
   };
 
   return (
@@ -141,6 +311,15 @@ export const ChatPreview: FC<ChatPreviewProps> = ({
           isDark={isDark}
           onReset={handleReset}
           memoryInfo={memoryInfo}
+          isTemporary
+          onExport={
+            onFinalize
+              ? () => {
+                  // TODO: Show export modal
+                  console.log("Export clicked");
+                }
+              : undefined
+          }
         />
         <div
           className={`flex-1 p-6 overflow-y-auto space-y-4 ${

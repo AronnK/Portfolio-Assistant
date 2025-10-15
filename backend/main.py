@@ -12,14 +12,45 @@ from rag import Rag
 
 load_dotenv()
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "https://portfolio-assistant-one.vercel.app"}})
+
+# CORS configuration for production and local dev
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "http://localhost:3000",
+            "https://portfolio-assistant-one.vercel.app",
+            "https://*.vercel.app"
+        ]
+    }
+})
 
 try:
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+    print(" Google AI configured successfully")
 except Exception as e:
-    print(f"CRITICAL: Failed to configure Google AI. Check your GOOGLE_API_KEY. Error: {e}")
+    print(f" CRITICAL: Failed to configure Google AI. Error: {e}")
 
 parse_cache = {}
+
+# Root and health check routes
+@app.route('/')
+def home():
+    return jsonify({
+        "status": "Portfolio AI Assistant API",
+        "version": "1.0.0",
+        "endpoints": [
+            "/health",
+            "/api/parse-resume",
+            "/api/build-bot",
+            "/api/chat",
+            "/api/collections/finalize",
+            "/api/add-to-bot"
+        ]
+    })
+
+@app.route('/health')
+def health():
+    return jsonify({"status": "healthy", "timestamp": str(uuid.uuid4())})
 
 @app.route('/api/parse-resume', methods=['POST'])
 def parse_resume():
@@ -29,105 +60,109 @@ def parse_resume():
     file = request.files['resume']
     file_content = file.read()
     file_hash = hashlib.md5(file_content).hexdigest()
+    
     if file_hash in parse_cache:
-        print("Returning cached parsing result.")
+        print(" Returning cached parsing result")
         return jsonify(parse_cache[file_hash])
 
     temp_path = f"./temp_{uuid.uuid4()}.pdf"
-    with open(temp_path, 'wb') as f: f.write(file_content)
-    raw_text = load_parse_pdf(temp_path)
-    os.remove(temp_path)
-
     try:
+        with open(temp_path, 'wb') as f:
+            f.write(file_content)
+        
+        raw_text = load_parse_pdf(temp_path)
+        os.remove(temp_path)
+
         model = genai.GenerativeModel("models/gemini-2.0-flash-lite")
         prompt = f"""
-            You are a highly sophisticated AI resume parser. Your primary function is to meticulously analyze raw text from a resume and convert it into a structured JSON object.
+You are a highly sophisticated AI resume parser. Your primary function is to meticulously analyze raw text from a resume and convert it into a structured JSON object.
 
-            **Goal:** Extract key information and structure it according to the specified JSON schema below.
+**Goal:** Extract key information and structure it according to the specified JSON schema below.
 
-            **JSON Output Schema:**
+**JSON Output Schema:**
 
-            The final output MUST be a single JSON object with the following structure. Pay close attention to the data types and required/optional fields.
+The final output MUST be a single JSON object with the following structure. Pay close attention to the data types and required/optional fields.
 
-            {{
-            "personal_details": {{
-                "name": "string | null",
-                "email": "string | null",
-                "phone": "string | null",
-                "links": [
-                {{
-                    "type": "linkedin | github | portfolio | other",
-                    "url": "string"
-                }}
-                ]
-            }},
-            "summary": "string | null",
-            "EDUCATION": [
-                {{
-                "title": "string",
-                "subtitle": "string | null",
-                "date": "string | null",
-                "description": "string | null"
-                }}
-            ],
-            "EXPERIENCE": [
-                {{
-                "title": "string",
-                "subtitle": "string | null",
-                "date": "string | null",
-                "description": "string"
-                }}
-            ],
-            "PROJECTS": [
-                {{
-                "title": "string",
-                "subtitle": "string | null",
-                "date": "string | null",
-                "description": "string"
-                }}
-            ],
-            "SKILLS": [
-                {{
-                "title": "string",
-                "description": "string | null"
-                }}
-            ],
-            "CERTIFICATIONS": [
-                {{
-                "title": "string",
-                "subtitle": "string | null",
-                "date": "string | null"
-                }}
-            ]
-            }}
+{{
+  "personal_details": {{
+    "name": "string | null",
+    "email": "string | null",
+    "phone": "string | null",
+    "links": [
+      {{
+        "type": "linkedin | github | portfolio | other",
+        "url": "string"
+      }}
+    ]
+  }},
+  "summary": "string | null",
+  "EDUCATION": [
+    {{
+      "title": "string",
+      "subtitle": "string | null",
+      "date": "string | null",
+      "description": "string | null"
+    }}
+  ],
+  "EXPERIENCE": [
+    {{
+      "title": "string",
+      "subtitle": "string | null",
+      "date": "string | null",
+      "description": "string"
+    }}
+  ],
+  "PROJECTS": [
+    {{
+      "title": "string",
+      "subtitle": "string | null",
+      "date": "string | null",
+      "description": "string"
+    }}
+  ],
+  "SKILLS": [
+    {{
+      "title": "string",
+      "description": "string | null"
+    }}
+  ],
+  "CERTIFICATIONS": [
+    {{
+      "title": "string",
+      "subtitle": "string | null",
+      "date": "string | null"
+    }}
+  ]
+}}
 
-            **Strict Instructions & Edge Case Handling:**
+**Strict Instructions & Edge Case Handling:**
 
-            1.  **JSON ONLY:** The output MUST be a single, valid JSON object and nothing else. Do not wrap it in markdown backticks (` ```json `) or add any explanatory text before or after the JSON.
-            2.  **Extract Personal Details:** At the top of the resume, find the candidate's full name, email address, phone number, and any URLs for LinkedIn, GitHub, or personal portfolios. Populate the `personal_details` object with this information.
-            3.  **Intelligent Mapping:** Intelligently map resume sections to the correct keys. For example, "Work History" or "Internships" should be mapped to the "EXPERIENCE" array. "Technical Skills" or "Languages" should be mapped to the "SKILLS" array.
-            4.  **Consolidate Information:** Combine related lines. Bullet points describing a single job (`- Led a team...`, `- Developed a feature...`) should be merged into one `description` field with `\\n` as the separator between points.
-            5.  **Handle Missing Data:** If a section (like "CERTIFICATIONS") is not present in the resume, omit the key entirely from the JSON. If an optional field within an item (like `date`) is missing, omit that key for that specific item. Do not invent data.
+1.  **JSON ONLY:** The output MUST be a single, valid JSON object and nothing else. Do not wrap it in markdown backticks or add any explanatory text.
+2.  **Extract Personal Details:** At the top of the resume, find the candidate's full name, email address, phone number, and any URLs for LinkedIn, GitHub, or personal portfolios.
+3.  **Intelligent Mapping:** Intelligently map resume sections to the correct keys. For example, "Work History" or "Internships" should be mapped to the "EXPERIENCE" array. "Technical Skills" or "Languages" should be mapped to the "SKILLS" array.
+4.  **Consolidate Information:** Combine related lines. Bullet points describing a single job should be merged into one `description` field with \\n as the separator between points.
+5.  **Handle Missing Data:** If a section (like "CERTIFICATIONS") is not present in the resume, omit the key entirely from the JSON. If an optional field within an item (like `date`) is missing, omit that key for that specific item. Do not invent data.
 
-            --- RESUME TEXT START ---
-            {raw_text}
-            --- RESUME TEXT END ---
-            """
+--- RESUME TEXT START ---
+{raw_text}
+--- RESUME TEXT END ---
+"""
         response = model.generate_content(prompt)
-        json_response_string = response.text.strip().replace("```json", "").replace("```", "").strip()
+        json_response_string = response.text.strip().replace("``````", "").strip()
         parsed_json = json.loads(json_response_string)
         parse_cache[file_hash] = parsed_json
+        
+        print(f" Resume parsed successfully")
         return jsonify(parsed_json)
+        
     except Exception as e:
-        print(f"Error during AI parsing: {e}")
-        return jsonify({"error": f"Failed to parse resume using AI: {e}"}), 500
+        print(f" Error during AI parsing: {e}")
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        return jsonify({"error": f"Failed to parse resume using AI: {str(e)}"}), 500
 
 @app.route('/api/build-bot', methods=['POST'])
 def build_bot():
-    """
-    Builds a bot in a TEMPORARY collection, using detailed text formatting,
-    and returns the temporary collection name.
-    """
     try:
         provider_name = request.form.get('provider_name', 'google')
         api_key = request.form.get('api_key') or os.getenv("GOOGLE_API_KEY")
@@ -140,9 +175,12 @@ def build_bot():
         if 'personal_details' in parsed_data and isinstance(parsed_data['personal_details'], dict):
             pd = parsed_data['personal_details']
             full_text_content += "PERSONAL DETAILS:\n"
-            if pd.get('name'): full_text_content += f"Name: {pd['name']}\n"
-            if pd.get('email'): full_text_content += f"Email: {pd['email']}\n"
-            if pd.get('phone'): full_text_content += f"Phone: {pd['phone']}\n"
+            if pd.get('name'):
+                full_text_content += f"Name: {pd['name']}\n"
+            if pd.get('email'):
+                full_text_content += f"Email: {pd['email']}\n"
+            if pd.get('phone'):
+                full_text_content += f"Phone: {pd['phone']}\n"
             if pd.get('links') and isinstance(pd['links'], list):
                 for link in pd['links']:
                     if isinstance(link, dict):
@@ -163,9 +201,12 @@ def build_bot():
 
                 if isinstance(item, dict):
                     full_text_content += f"Title: {item.get('title', 'N/A')}\n"
-                    if item.get('subtitle'): full_text_content += f"Organization/Institution: {item.get('subtitle')}\n"
-                    if item.get('date'): full_text_content += f"Duration: {item.get('date')}\n"
-                    if item.get('description'): full_text_content += f"Description: {item.get('description')}\n"
+                    if item.get('subtitle'):
+                        full_text_content += f"Organization/Institution: {item.get('subtitle')}\n"
+                    if item.get('date'):
+                        full_text_content += f"Duration: {item.get('date')}\n"
+                    if item.get('description'):
+                        full_text_content += f"Description: {item.get('description')}\n"
                 elif isinstance(item, str):
                     full_text_content += f"Skill/Item: {item}\n"
                 
@@ -180,18 +221,17 @@ def build_bot():
         )
         rag_system.set_doc_pipeline(chunks=all_chunks)
         
-        print(f"Bot built successfully: {temp_collection_name}")
+        print(f" Bot built successfully: {temp_collection_name}")
         return jsonify({
             "message": "Temporary bot built successfully", 
             "collection_name": temp_collection_name
         })
         
     except Exception as e:
-        print(f"Error building bot: {str(e)}")
+        print(f" Error building bot: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": f"Failed to build bot: {str(e)}"}), 500
-
 
 @app.route('/api/collections/finalize', methods=['POST'])
 def finalize_collection():
@@ -203,11 +243,15 @@ def finalize_collection():
 
     if not source_name or not target_name:
         return jsonify({"error": "Missing source or target collection name"}), 400
+    
     try:
         rag_system = Rag(collection_name=source_name, provider_name=provider_name, api_key=api_key)
         rag_system.rename_collection(new_name=target_name)
+        
+        print(f" Collection finalized: {source_name} → {target_name}")
         return jsonify({"message": "Collection finalized", "new_collection_name": target_name})
     except Exception as e:
+        print(f" Error finalizing collection: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/add-to-bot', methods=['POST'])
@@ -221,9 +265,15 @@ def add_to_bot():
     if not collection_name or not new_text:
         return jsonify({"error": "Missing collection_name or text"}), 400
     
-    rag_system = Rag(collection_name=collection_name, provider_name=provider_name, api_key=api_key)
-    num_added = rag_system.add_documents(chunks=chunkify_text(new_text))
-    return jsonify({"message": f"Successfully added {num_added} new documents."})
+    try:
+        rag_system = Rag(collection_name=collection_name, provider_name=provider_name, api_key=api_key)
+        num_added = rag_system.add_documents(chunks=chunkify_text(new_text))
+        
+        print(f" Added {num_added} documents to {collection_name}")
+        return jsonify({"message": f"Successfully added {num_added} new documents."})
+    except Exception as e:
+        print(f" Error adding to bot: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -236,10 +286,19 @@ def chat():
     if not collection_name or not query:
         return jsonify({"error": "Missing collection_name or query"}), 400
     
-    rag_system = Rag(collection_name=collection_name, provider_name=provider_name, api_key=api_key)
-    answer = rag_system.answer_query(query)
-    memory_info = rag_system.get_memory_summary()
-    return jsonify({"answer": answer, "memory": memory_info})
+    try:
+        rag_system = Rag(collection_name=collection_name, provider_name=provider_name, api_key=api_key)
+        answer = rag_system.answer_query(query)
+        memory_info = rag_system.get_memory_summary()
+        
+        print(f" Chat query answered for collection: {collection_name}")
+        return jsonify({"answer": answer, "memory": memory_info})
+    except Exception as e:
+        print(f" Chat error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    port = int(os.environ.get('PORT', 8080))
+    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
+    print(f"🚀 Starting Flask app on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=debug)

@@ -1,16 +1,41 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const useTheme = () => {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
 
-  const toggleTheme = () => setIsDark(!isDark);
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("portfolio-theme");
 
-  const themeClasses = {
-    background: isDark
-      ? "bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950"
-      : "bg-gradient-to-br from-indigo-50 via-white to-purple-50",
+    if (savedTheme) {
+      setIsDark(savedTheme === "dark");
+    } else {
+      const systemPrefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      setIsDark(systemPrefersDark);
+      localStorage.setItem(
+        "portfolio-theme",
+        systemPrefersDark ? "dark" : "light"
+      );
+    }
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e: MediaQueryListEvent) => {
+      const newTheme = e.matches ? "dark" : "light";
+      setIsDark(e.matches);
+      localStorage.setItem("portfolio-theme", newTheme);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = !isDark;
+    setIsDark(newTheme);
+    localStorage.setItem("portfolio-theme", newTheme ? "dark" : "light");
   };
 
-  return { isDark, toggleTheme, themeClasses };
+  return { isDark, toggleTheme };
 };

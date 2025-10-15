@@ -21,7 +21,7 @@ import {
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
@@ -36,7 +36,11 @@ export default function LandingPage() {
   };
 
   const handleGetStarted = () => {
-    router.push(user ? "/home" : "/auth");
+    if (user) {
+      router.push("/home");
+    } else {
+      signInWithGoogle();
+    }
   };
 
   const features = [
@@ -170,7 +174,7 @@ export default function LandingPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => router.push("/auth")}
+                onClick={signInWithGoogle}
                 className={`px-4 py-2 rounded-lg font-medium ${
                   isDark
                     ? "bg-purple-600 hover:bg-purple-500 text-white"

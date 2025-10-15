@@ -5,7 +5,7 @@ from typing import List, Dict
 from collections import deque
 from dotenv import load_dotenv
 
-from llm_providers import get_provider, LLMProvider
+from llm_provider import get_provider, LLMProvider
 
 load_dotenv()
 
@@ -13,14 +13,11 @@ class Rag:
     def __init__(self, collection_name: str, provider_name: str, api_key: str):
         self.provider: LLMProvider = get_provider(provider_name, api_key)
 
-       
-        self.chroma_client = chromadb.Client() #dummy (local db)
-
-        # self.chroma_client = chromadb.CloudClient(
-        #     tenant=os.getenv("CHROMA_TENANT"),
-        #     database=os.getenv("CHROMA_DATABASE"),
-        #     api_key=os.getenv("CHROMA_API_KEY")
-        # ) #prod stuff
+        self.chroma_client = chromadb.CloudClient(
+            tenant=os.getenv("CHROMA_TENANT"),
+            database=os.getenv("CHROMA_DATABASE"),
+            api_key=os.getenv("CHROMA_API_KEY")
+        )
         
         self.collection = self.chroma_client.get_or_create_collection(name=collection_name)
         self.conversation_memory = deque(maxlen=6)
@@ -96,12 +93,7 @@ class Rag:
         data = self.collection.get(include=["embeddings", "documents", "metadatas"])
         new_collection = self.chroma_client.create_collection(name=new_name)
         if data and data['ids']:
-            new_collection.add(
-                ids=data['ids'],
-                embeddings=data['embeddings'],
-                documents=data['documents'],
-                metadatas=data['metadatas']
-            )
+            new_collection.add(ids=data['ids'], embeddings=data['embeddings'], documents=data['documents'], metadatas=data['metadatas'])
         self.chroma_client.delete_collection(name=self.collection.name)
         self.collection = new_collection
 
@@ -119,6 +111,15 @@ class Rag:
         self.collection.add(embeddings=all_embs, documents=chunks, ids=ids)
         return len(chunks)
 
+    def _format_conversation_history(self) -> str:
+        if not self.conversation_memory:
+            return ""
+        history_str = "**Recent Conversation History:**\n"
+        for msg in self.conversation_memory:
+            role = "Human" if msg['role'] == 'user' else "AI"
+            history_str += f"{role}: {msg['content']}\n"
+        return history_str
+        
     def clear_memory(self):
         self.conversation_memory.clear()
     

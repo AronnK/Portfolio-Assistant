@@ -1,7 +1,7 @@
 import { createClient } from './client';
 
 export interface CreateChatbotParams {
-  userId: string; // Changed from number to string (UUID)
+  userId: string;
   collectionName: string;
   projectName?: string;
   llmProvider?: string;
@@ -15,11 +15,19 @@ export interface UpdateChatbotParams {
   encryptedApiKey?: string;
 }
 
+export interface FinalizeChatbotParams {
+  userId: string;
+  collectionName: string;
+  llmProvider: string;
+  encryptedApiKey: string;
+  projectName?: string;
+}
+
 export class ChatbotService {
   /**
    * Check if user has any existing chatbots
    */
-  static async getUserChatbots(userId: string) { // Changed from number to string
+  static async getUserChatbots(userId: string) {
     const supabase = createClient();
     
     try {
@@ -51,7 +59,7 @@ export class ChatbotService {
   /**
    * Get user's primary/default chatbot
    */
-  static async getPrimaryChatbot(userId: string) { // Changed from number to string
+  static async getPrimaryChatbot(userId: string) {
     const supabase = createClient();
     
     try {
@@ -103,6 +111,37 @@ export class ChatbotService {
       return { success: true, chatbot: data };
     } catch (error: any) {
       console.error('Error creating chatbot:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Finalize a new chatbot (update empty row with collection details)
+   */
+  static async finalizeNewChatbot(params: FinalizeChatbotParams) {
+    const supabase = createClient();
+    
+    try {
+      // Find and update the empty row for this user
+      const { data, error } = await supabase
+        .from('Chatbot')
+        .update({
+          collection_name: params.collectionName,
+          llm_provider: params.llmProvider,
+          encrypted_api_key: params.encryptedApiKey,
+          project_name: params.projectName || 'default',
+          status: 'active'
+        })
+        .eq('user_id', params.userId)
+        .is('collection_name', null)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, chatbot: data };
+    } catch (error: any) {
+      console.error('Error finalizing chatbot:', error);
       return { success: false, error: error.message };
     }
   }

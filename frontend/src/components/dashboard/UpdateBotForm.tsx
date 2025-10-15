@@ -1,9 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, Loader2, CheckCircle } from "lucide-react";
+import toast from "react-hot-toast";
+import { Plus, Loader2 } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { UpdateFormData } from "@/app/types";
+import { ChatbotService } from "@/lib/supabase/chatbot";
+import { EncryptionService } from "@/lib/utils/encryption";
+import { createClient } from "@/lib/supabase/client";
 
 interface UpdateBotFormProps {
   chatbotId: number;
@@ -26,45 +30,83 @@ export const UpdateBotForm = ({
     type: "project",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
+
+  // Store decrypted config
+  const [botConfig, setBotConfig] = useState<{
+    provider: string;
+    apiKey: string;
+  } | null>(null);
+
+  // Fetch and decrypt API key on mount
+  useEffect(() => {
+    const fetchBotConfig = async () => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) return;
+
+        const result = await ChatbotService.getUserChatbots(user.id);
+
+        if (result.success && result.chatbots.length > 0) {
+          const bot = result.chatbots.find((b) => b.id === chatbotId);
+
+          if (bot && bot.encrypted_api_key) {
+            const decryptedKey = EncryptionService.decrypt(
+              bot.encrypted_api_key
+            );
+
+            setBotConfig({
+              provider: bot.llm_provider || "google",
+              apiKey: decryptedKey,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching bot config:", error);
+      }
+    };
+
+    fetchBotConfig();
+  }, [chatbotId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitStatus("idle");
+    const loadingToast = toast.loading("Adding information...");
 
     try {
-      // Call your backend API to update the collection
-      const response = await fetch("http://127.0.0.1:5001/api/chatbot/update", {
+      // Use decrypted API key
+      const response = await fetch("http://127.0.0.1:5001/api/add-to-bot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           collection_name: collectionName,
-          chunks: [
-            `${formData.type.toUpperCase()}: ${formData.title}\n${
-              formData.details
-            }`,
-          ],
-          metadata: {
-            type: formData.type,
-            title: formData.title,
-            added_at: new Date().toISOString(),
-          },
+          text: `${formData.type.toUpperCase()}: ${formData.title}\n${
+            formData.details
+          }`,
+          provider_name: botConfig?.provider || "google",
+          api_key: botConfig?.apiKey || "", // Use decrypted key
         }),
       });
 
       if (!response.ok) throw new Error("Update failed");
 
-      setSubmitStatus("success");
+      await ChatbotService.updateChatbot({
+        chatbotId: chatbotId,
+      });
+
+      toast.success("Information added successfully!", { id: loadingToast });
+
       setTimeout(() => {
         onSuccess();
         setFormData({ title: "", details: "", type: "project" });
-      }, 1500);
+      }, 1000);
     } catch (error) {
       console.error("Error updating bot:", error);
-      setSubmitStatus("error");
+      toast.error("Failed to update. Please try again.", { id: loadingToast });
     } finally {
       setIsSubmitting(false);
     }
@@ -163,27 +205,6 @@ export const UpdateBotForm = ({
             }`}
           />
         </div>
-
-        {submitStatus === "success" && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 text-green-500 text-sm font-medium"
-          >
-            <CheckCircle className="w-4 h-4" />
-            Successfully added!
-          </motion.div>
-        )}
-
-        {submitStatus === "error" && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-red-500 text-sm font-medium"
-          >
-            Failed to update. Please try again.
-          </motion.div>
-        )}
 
         <div className="flex gap-3 pt-2">
           <motion.button

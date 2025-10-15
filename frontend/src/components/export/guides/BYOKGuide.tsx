@@ -1,10 +1,14 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 import { GuideStep } from "../shared/GuideStep";
 import { APIKeyInput } from "../shared/APIKeyInput";
 import { WarningBanner } from "../shared/WarningBanner";
 import { ExternalLink } from "../shared/ExternalLink";
+import { ChatbotService } from "@/lib/supabase/chatbot";
+import { createClient } from "@/lib/supabase/client";
+import { EncryptionService } from "@/lib/utils/encryption";
 
 interface BYOKGuideProps {
   tempCollectionName: string;
@@ -58,11 +62,13 @@ export const BYOKGuide = ({
 
   const handleActivate = async () => {
     if (!apiKey.trim()) {
-      alert("Please enter your API key");
+      console.error("enter key");
+      //   toast.error("Please enter your API key");
       return;
     }
 
     setIsActivating(true);
+    // const loadingToast = toast.loading("Activating your bot...");
 
     try {
       const response = await fetch(
@@ -79,15 +85,48 @@ export const BYOKGuide = ({
         }
       );
 
-      if (!response.ok) throw new Error("Failed to activate bot");
+      if (!response.ok) throw new Error("Failed to finalize collection");
 
       const result = await response.json();
-      console.log("Bot activated:", result);
+      console.log("Collection finalized:", result);
 
-      if (onComplete) onComplete();
-    } catch (error) {
+      const supabase = createClient();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error("User not authenticated");
+      }
+
+      const encryptedApiKey = EncryptionService.encrypt(apiKey);
+      console.log("API key encrypted");
+
+      const supabaseResult = await ChatbotService.finalizeNewChatbot({
+        userId: user.id,
+        collectionName: result.new_collection_name,
+        llmProvider: provider,
+        encryptedApiKey: encryptedApiKey,
+        projectName: "default",
+      });
+
+      if (!supabaseResult.success) {
+        throw new Error(supabaseResult.error || "Failed to update database");
+      }
+
+      console.log("Supabase updated:", supabaseResult.chatbot);
+
+      //   toast.success("Bot activated successfully! 🎉", { id: loadingToast });
+
+      setTimeout(() => {
+        if (onComplete) onComplete();
+      }, 1500);
+    } catch (error: any) {
       console.error("Activation error:", error);
-      alert("Failed to activate bot. Please try again.");
+      //   toast.error(error.message || "Failed to activate bot", {
+      //     id: loadingToast,
+      //   });
     } finally {
       setIsActivating(false);
     }
@@ -187,7 +226,7 @@ export const BYOKGuide = ({
           <APIKeyInput value={apiKey} onChange={setApiKey} isDark={isDark} />
           <div className="mt-3">
             <WarningBanner
-              message="Your API key is encrypted and never shared. We recommend creating a separate key with limited permissions."
+              message="Your API key is encrypted with AES-256 before storage and never shared. We recommend creating a separate key with limited permissions."
               isDark={isDark}
             />
           </div>

@@ -12,6 +12,7 @@ interface ExportGuideProps {
   tempCollectionName: string;
   onBack: () => void;
   isDark: boolean;
+  onComplete?: () => void;
 }
 
 export const ExportGuide = ({
@@ -19,18 +20,24 @@ export const ExportGuide = ({
   tempCollectionName,
   onBack,
   isDark,
+  onComplete,
 }: ExportGuideProps) => {
   const renderGuide = () => {
     switch (exportType) {
       case "byok":
         return (
-          <BYOKGuide tempCollectionName={tempCollectionName} isDark={isDark} />
+          <BYOKGuide
+            tempCollectionName={tempCollectionName}
+            isDark={isDark}
+            onComplete={onComplete}
+          />
         );
       case "iframe":
         return (
           <IFrameGuide
             tempCollectionName={tempCollectionName}
             isDark={isDark}
+            onComplete={onComplete}
           />
         );
       case "widget":
@@ -38,11 +45,16 @@ export const ExportGuide = ({
           <WidgetGuide
             tempCollectionName={tempCollectionName}
             isDark={isDark}
+            // onComplete={onComplete}
           />
         );
       case "api":
         return (
-          <APIGuide tempCollectionName={tempCollectionName} isDark={isDark} />
+          <APIGuide
+            tempCollectionName={tempCollectionName}
+            isDark={isDark}
+            // onComplete={onComplete}
+          />
         );
       default:
         return null;

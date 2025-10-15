@@ -178,6 +178,7 @@ import { ParsedResumeData } from "@/app/types";
 import { useTheme } from "./hooks/useTheme";
 import { useAuth } from "@/context/AuthContext";
 import { useChatbot } from "./hooks/useChatBot";
+import { ChatbotService } from "@/lib/supabase/chatbot";
 import { PageContainer } from "@/components/layout/container";
 import { StepHeader } from "@/components/StepHeader";
 import { EnrichmentForm } from "../components/enrichmentForm";
@@ -249,6 +250,16 @@ export default function Home() {
     setChatbotId(botId);
   };
 
+  const handleFinalize = async () => {
+    console.log("Bot finalized! Redirecting to dashboard...");
+
+    await refetchChatbots();
+
+    setTempCollectionName(null);
+    setParsedData(null);
+    setOriginalFile(null);
+  };
+
   const getCurrentView = () => {
     if (authLoading || chatbotLoading) {
       return "loading";
@@ -303,10 +314,7 @@ export default function Home() {
           chatbotId={tempCollectionName}
           isDark={isDark}
           isTemporary={true}
-          onFinalize={(provider, apiKey) => {
-            // TODO: Call finalization API
-            console.log("Finalizing with:", provider, apiKey);
-          }}
+          onFinalize={handleFinalize}
         />
       );
     }

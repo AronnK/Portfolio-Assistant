@@ -42,8 +42,8 @@ class GoogleProvider(LLMProvider):
         if not genai:
             raise ImportError("google-generativeai is not installed. Please run 'pip install google-generativeai'")
         genai.configure(api_key=self.api_key)
-        self.llm_model = genai.GenerativeModel("models/gemini-1.5-flash")
-        self.embedding_model = "models/embedding-001"
+        self.llm_model = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+        self.embedding_model = "gemini-embedding-001"
 
     def generate_content(self, prompt: str) -> str:
         response = self.llm_model.generate_content(prompt)

@@ -11,6 +11,7 @@ interface ExportModalProps {
   onClose: () => void;
   tempCollectionName: string;
   isDark: boolean;
+  onComplete?: () => void;
 }
 
 export type ExportType = "byok" | "iframe" | "widget" | "api" | null;
@@ -20,6 +21,7 @@ export const ExportModal = ({
   onClose,
   tempCollectionName,
   isDark,
+  onComplete,
 }: ExportModalProps) => {
   const [selectedExport, setSelectedExport] = useState<ExportType>(null);
 
@@ -82,7 +84,6 @@ export const ExportModal = ({
               </div>
             </div>
 
-            {/* Content */}
             <div className="p-6">
               {!selectedExport ? (
                 <ExportOptions onSelect={setSelectedExport} isDark={isDark} />
@@ -92,6 +93,7 @@ export const ExportModal = ({
                   tempCollectionName={tempCollectionName}
                   onBack={() => setSelectedExport(null)}
                   isDark={isDark}
+                  onComplete={onComplete}
                 />
               )}
             </div>

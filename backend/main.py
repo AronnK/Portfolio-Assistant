@@ -126,12 +126,13 @@ def parse_resume():
         
         json_response_string = response.text.strip()
         
-        if json_response_string.startswith("```
+        if json_response_string.startswith("```json"):
             json_response_string = json_response_string[7:]
-        elif json_response_string.startswith("```
+        elif json_response_string.startswith("```"):
             json_response_string = json_response_string[3:]
-        if json_response_string.endswith("```
+        if json_response_string.endswith("```"):
             json_response_string = json_response_string[:-3]
+
         
         json_response_string = json_response_string.strip()
         

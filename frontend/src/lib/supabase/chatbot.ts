@@ -1,4 +1,5 @@
 import { createClient } from './client';
+import { ChatbotData } from '@/app/types';
 
 export interface CreateChatbotParams {
   userId: string;
@@ -23,16 +24,7 @@ export interface FinalizeChatbotParams {
   projectName?: string;
 }
 
-interface ChatbotUpdatePayload {
-  collection_name?: string;
-  llm_provider?: string;
-  encrypted_api_key?: string;
-}
-
 export class ChatbotService {
-  /**
-   * Check if user has any existing chatbots
-   */
   static async getUserChatbots(userId: string) {
     const supabase = createClient();
     
@@ -51,20 +43,23 @@ export class ChatbotService {
         chatbots: data || [],
         hasExisting: (data?.length || 0) > 0
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching chatbots:', error);
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
       return { 
         success: false, 
-        error: error.message,
+        error: errorMessage,
         chatbots: [],
         hasExisting: false
       };
     }
   }
 
-  /**
-   * Get user's primary/default chatbot
-   */
   static async getPrimaryChatbot(userId: string) {
     const supabase = createClient();
     
@@ -84,17 +79,21 @@ export class ChatbotService {
         success: true, 
         chatbot: data 
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('Error fetching primary chatbot:', error);
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
       return { 
         success: false, 
-        error: error.message 
+        error: errorMessage
       };
     }
   }
 
-  /**
-   * Create new chatbot entry
-   */
   static async createChatbot(params: CreateChatbotParams) {
     const supabase = createClient();
     
@@ -115,20 +114,25 @@ export class ChatbotService {
       if (error) throw error;
 
       return { success: true, chatbot: data };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating chatbot:', error);
-      return { success: false, error: error.message };
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      return { 
+        success: false, 
+        error: errorMessage
+      };
     }
   }
 
-  /**
-   * Finalize a new chatbot (update empty row with collection details)
-   */
   static async finalizeNewChatbot(params: FinalizeChatbotParams) {
     const supabase = createClient();
     
     try {
-      // Find and update the empty row for this user
       const { data, error } = await supabase
         .from('Chatbot')
         .update({
@@ -146,23 +150,30 @@ export class ChatbotService {
       if (error) throw error;
 
       return { success: true, chatbot: data };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error finalizing chatbot:', error);
-      return { success: false, error: error.message };
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      return { 
+        success: false, 
+        error: errorMessage
+      };
     }
   }
 
-  /**
-   * Update chatbot configuration
-   */
   static async updateChatbot(params: UpdateChatbotParams) {
     const supabase = createClient();
-    
-    const updateData: ChatbotUpdatePayload = {};
+    const updateData: Partial<ChatbotData> = {};
 
     if (params.collectionName) updateData.collection_name = params.collectionName;
     if (params.llmProvider) updateData.llm_provider = params.llmProvider;
     if (params.encryptedApiKey) updateData.encrypted_api_key = params.encryptedApiKey;
+    
+    updateData.last_updated = new Date().toISOString();
 
     try {
       const { data, error } = await supabase
@@ -173,17 +184,22 @@ export class ChatbotService {
         .single();
 
       if (error) throw error;
-
       return { success: true, chatbot: data };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating chatbot:', error);
-      return { success: false, error: error.message };
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      return { 
+        success: false, 
+        error: errorMessage
+      };
     }
   }
 
-  /**
-   * Delete chatbot
-   */
   static async deleteChatbot(chatbotId: number) {
     const supabase = createClient();
     
@@ -196,9 +212,18 @@ export class ChatbotService {
       if (error) throw error;
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting chatbot:', error);
-      return { success: false, error: error.message };
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      return { 
+        success: false, 
+        error: errorMessage
+      };
     }
   }
 }

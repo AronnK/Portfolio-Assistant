@@ -11,7 +11,7 @@ import { Sparkles } from "lucide-react";
 export default function EnrichPage() {
   const router = useRouter();
   const { isDark, toggleTheme } = useTheme();
-  const { appState, getResumeFile, clearParsedData } = useAppState();
+  const { appState, getResumeFile } = useAppState();
 
   useEffect(() => {
     if (!appState.parsedData) {

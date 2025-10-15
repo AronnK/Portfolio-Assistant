@@ -122,15 +122,16 @@ export const BYOKGuide = ({
       setTimeout(() => {
         if (onComplete) onComplete();
       }, 1500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Activation error:", error);
-      toast.error(error.message || "Failed to activate bot", {
-        id: loadingToast,
-      });
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to activate bot";
+      toast.error(errorMessage, { id: loadingToast });
     } finally {
       setIsActivating(false);
     }
   };
+
   return (
     <div className="space-y-6">
       <div>
@@ -142,7 +143,8 @@ export const BYOKGuide = ({
           Bring Your Own API Key
         </h3>
         <p className={`text-sm ${isDark ? "text-gray-500" : "text-slate-600"}`}>
-          Use your own AI provider's API key - no recurring charges from us!
+          Use your own AI provider&apos;s API key - no recurring charges from
+          us!
         </p>
       </div>
 

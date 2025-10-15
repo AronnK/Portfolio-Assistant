@@ -1,3 +1,5 @@
+export type LLMProvider = "google" | "openai" | "groq";
+
 export interface ParsedItem {
   title: string;
   subtitle?: string;
@@ -6,19 +8,31 @@ export interface ParsedItem {
 }
 
 export interface ParsedResumeData {
-  [sectionName: string]: ParsedItem[];
+  personal_details?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    links?: { type: string; url: string }[];
+  };
+  summary?: string;
+  EDUCATION?: ParsedItem[];
+  EXPERIENCE?: ParsedItem[];
+  PROJECTS?: ParsedItem[];
+  SKILLS?: ParsedItem[];
+  CERTIFICATIONS?: ParsedItem[];
+  [section: string]: ParsedItem[] | string | Record<string, unknown> | undefined;
 }
 
 export interface ChatbotData {
   id: number;
+  created_at: string;
   user_id: string;
   collection_name: string;
-  project_name: string;
-  llm_provider: string | null;
+  llm_provider: LLMProvider | string | null;
   encrypted_api_key: string | null;
-  status: string;
-  created_at: string;
-  last_updated: string;
+  project_name: string | null;
+  status: string | null;
+  last_updated: string | null;
 }
 
 export interface UpdateFormData {

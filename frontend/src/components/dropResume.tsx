@@ -5,9 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileText, Loader2, CheckCircle2 } from "lucide-react";
 import { useAppState } from "@/context/AppStateContext";
 import toast from "react-hot-toast";
+import { ParsedResumeData } from "@/app/types";
 
 interface ResumeDropzoneProps {
-  onParsed?: (data: any, file: File) => void;
+  onParsed?: (data: ParsedResumeData, file: File) => void;
   isDark?: boolean;
 }
 
@@ -60,10 +61,12 @@ export const ResumeDropzone = ({
       setTimeout(() => {
         router.push("/home/enrich");
       }, 500);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Upload error:", error);
       setUploadStatus("error");
-      toast.error(error.message || "Failed to parse resume");
+      const message =
+        error instanceof Error ? error.message : "An unknown error occurred.";
+      toast.error(message || "Failed to parse resume");
     } finally {
       setIsUploading(false);
     }

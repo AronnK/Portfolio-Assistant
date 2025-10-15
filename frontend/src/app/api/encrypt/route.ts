@@ -41,10 +41,14 @@ export async function POST(request: Request) {
       { error: 'Invalid action' },
       { status: 400 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('Encryption error:', error);
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'An unknown error occurred.';
+
     return NextResponse.json(
-      { error: 'Encryption operation failed' },
+      { error: 'An internal server error occurred', details: errorMessage },
       { status: 500 }
     );
   }

@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import { GuideStep } from "../shared/GuideStep";
 import { CodeBlock } from "../shared/CodeBlock";
 import { WarningBanner } from "../shared/WarningBanner";
@@ -60,7 +59,7 @@ export const IFrameGuide = ({
               isDark ? "text-gray-400" : "text-slate-600"
             }`}
           >
-            <li>• Open your website's HTML file or CMS editor</li>
+            <li>• Open your website&apos;s HTML file or CMS editor</li>
             <li>• Find where you want to place the chatbot</li>
             <li>• Paste the iFrame code</li>
             <li>• Save and publish your changes</li>
@@ -86,9 +85,9 @@ export const IFrameGuide = ({
                   isDark ? "bg-slate-800" : "bg-slate-200"
                 }`}
               >
-                width="100%"
+                width=&quot;100%&quot;
               </code>{" "}
-              to any size (e.g., "400px")
+              to any size (e.g., &quot;400px&quot;)
             </div>
             <div>
               <span className="font-medium">Height:</span> Change{" "}
@@ -97,7 +96,7 @@ export const IFrameGuide = ({
                   isDark ? "bg-slate-800" : "bg-slate-200"
                 }`}
               >
-                height="600"
+                height=&quot;600&quot;
               </code>{" "}
               to fit your design
             </div>

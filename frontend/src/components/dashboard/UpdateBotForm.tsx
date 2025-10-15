@@ -17,6 +17,8 @@ interface UpdateBotFormProps {
   onCancel: () => void;
 }
 
+type FormType = "project" | "education" | "internship" | "experience" | "other";
+
 export const UpdateBotForm = ({
   chatbotId,
   collectionName,
@@ -135,7 +137,7 @@ export const UpdateBotForm = ({
           <select
             value={formData.type}
             onChange={(e) =>
-              setFormData({ ...formData, type: e.target.value as any })
+              setFormData({ ...formData, type: e.target.value as FormType })
             }
             className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
               isDark

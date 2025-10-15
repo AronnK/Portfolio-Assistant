@@ -23,6 +23,9 @@ export const EnrichmentForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    "https://portfolio-assistant-1ash.onrender.com";
 
   const handleEnrichmentChange = (key: string, value: string) => {
     setEnrichments((prev) => ({ ...prev, [key]: value }));
@@ -46,7 +49,7 @@ export const EnrichmentForm = ({
     formData.append("api_key", "");
 
     try {
-      const response = await fetch("http://127.0.0.1:5001/api/build-bot", {
+      const response = await fetch(`${BACKEND_URL}/api/build-bot`, {
         method: "POST",
         body: formData,
       });

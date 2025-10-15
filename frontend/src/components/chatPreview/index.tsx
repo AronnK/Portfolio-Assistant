@@ -56,6 +56,9 @@ export const ChatPreview: FC<ChatPreviewProps> = ({
   } | null>(null);
 
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
+  const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    "https://portfolio-assistant-1ash.onrender.com";
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -130,7 +133,7 @@ export const ChatPreview: FC<ChatPreviewProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://127.0.0.1:5001/api/chat", {
+      const response = await fetch(`${BACKEND_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -25,7 +25,7 @@ export const EnrichmentForm = ({
   const [error, setError] = useState<string | null>(null);
   const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL ||
-    "https://portfolio-assistant-1ash.onrender.com";
+    "https://portfolio-assistant-1ush.onrender.com";
 
   const handleEnrichmentChange = (key: string, value: string) => {
     setEnrichments((prev) => ({ ...prev, [key]: value }));

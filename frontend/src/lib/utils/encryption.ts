@@ -1,51 +1,57 @@
-import CryptoJS from 'crypto-js';
-
-const ENCRYPTION_KEY = process.env.NEXT_PUBLIC_ENCRYPTION_KEY || 'fallback-key-change-in-production';
-
 export class EncryptionService {
-  /**
-   * Encrypt API key before storing
-   */
-  static encrypt(text: string): string {
-    try {
-      const encrypted = CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
-      return encrypted;
-    } catch (error) {
-      console.error('Encryption error:', error);
-      throw new Error('Failed to encrypt data');
-    }
-  }
-
-  /**
-   * Decrypt API key when retrieving
-   */
-  static decrypt(encryptedText: string): string {
-    try {
-      const bytes = CryptoJS.AES.decrypt(encryptedText, ENCRYPTION_KEY);
-      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-      
-      if (!decrypted) {
-        throw new Error('Decryption failed');
+    /**
+     * Encrypt API key using server-side encryption
+     */
+    static async encrypt(text: string): Promise<string> {
+      try {
+        const response = await fetch('/api/encrypt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'encrypt', text })
+        });
+  
+        if (!response.ok) {
+          throw new Error('Encryption failed');
+        }
+  
+        const { result } = await response.json();
+        return result;
+      } catch (error) {
+        console.error('Encryption error:', error);
+        throw new Error('Failed to encrypt data');
       }
-      
-      return decrypted;
-    } catch (error) {
-      console.error('Decryption error:', error);
-      throw new Error('Failed to decrypt data');
+    }
+  
+    /**
+     * Decrypt API key using server-side decryption
+     */
+    static async decrypt(encryptedText: string): Promise<string> {
+      try {
+        const response = await fetch('/api/encrypt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'decrypt', text: encryptedText })
+        });
+  
+        if (!response.ok) {
+          throw new Error('Decryption failed');
+        }
+  
+        const { result } = await response.json();
+        return result;
+      } catch (error) {
+        console.error('Decryption error:', error);
+        throw new Error('Failed to decrypt data');
+      }
+    }
+  
+    /**
+     * Validate if string looks like an encrypted value
+     * (Basic check - just verifies it's not empty and has expected format)
+     */
+    static isEncrypted(text: string): boolean {
+      // Encrypted strings are base64 and typically longer
+      return text.length > 20 && /^[A-Za-z0-9+/=]+$/.test(text);
     }
   }
-
-  /**
-   * Validate if string is encrypted
-   */
-  static isEncrypted(text: string): boolean {
-    try {
-      // Try to decrypt - if it fails, it's not encrypted
-      const bytes = CryptoJS.AES.decrypt(text, ENCRYPTION_KEY);
-      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-      return decrypted.length > 0;
-    } catch {
-      return false;
-    }
-  }
-}
+  

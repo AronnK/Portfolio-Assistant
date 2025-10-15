@@ -62,13 +62,12 @@ export const BYOKGuide = ({
 
   const handleActivate = async () => {
     if (!apiKey.trim()) {
-      console.error("enter key");
-      //   toast.error("Please enter your API key");
+      toast.error("Please enter your API key");
       return;
     }
 
     setIsActivating(true);
-    // const loadingToast = toast.loading("Activating your bot...");
+    const loadingToast = toast.loading("Activating your bot...");
 
     try {
       const response = await fetch(
@@ -100,7 +99,8 @@ export const BYOKGuide = ({
         throw new Error("User not authenticated");
       }
 
-      const encryptedApiKey = EncryptionService.encrypt(apiKey);
+      console.log("Encrypting API key...");
+      const encryptedApiKey = await EncryptionService.encrypt(apiKey);
       console.log("API key encrypted");
 
       const supabaseResult = await ChatbotService.finalizeNewChatbot({
@@ -117,21 +117,20 @@ export const BYOKGuide = ({
 
       console.log("Supabase updated:", supabaseResult.chatbot);
 
-      //   toast.success("Bot activated successfully! 🎉", { id: loadingToast });
+      toast.success("Bot activated successfully! 🎉", { id: loadingToast });
 
       setTimeout(() => {
         if (onComplete) onComplete();
       }, 1500);
     } catch (error: any) {
       console.error("Activation error:", error);
-      //   toast.error(error.message || "Failed to activate bot", {
-      //     id: loadingToast,
-      //   });
+      toast.error(error.message || "Failed to activate bot", {
+        id: loadingToast,
+      });
     } finally {
       setIsActivating(false);
     }
   };
-
   return (
     <div className="space-y-6">
       <div>

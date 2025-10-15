@@ -30,14 +30,11 @@ export const UpdateBotForm = ({
     type: "project",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Store decrypted config
   const [botConfig, setBotConfig] = useState<{
     provider: string;
     apiKey: string;
   } | null>(null);
 
-  // Fetch and decrypt API key on mount
   useEffect(() => {
     const fetchBotConfig = async () => {
       try {
@@ -54,7 +51,7 @@ export const UpdateBotForm = ({
           const bot = result.chatbots.find((b) => b.id === chatbotId);
 
           if (bot && bot.encrypted_api_key) {
-            const decryptedKey = EncryptionService.decrypt(
+            const decryptedKey = await EncryptionService.decrypt(
               bot.encrypted_api_key
             );
 
@@ -62,10 +59,13 @@ export const UpdateBotForm = ({
               provider: bot.llm_provider || "google",
               apiKey: decryptedKey,
             });
+
+            console.log("Bot config loaded and decrypted");
           }
         }
       } catch (error) {
         console.error("Error fetching bot config:", error);
+        toast.error("Failed to load bot configuration");
       }
     };
 
@@ -78,7 +78,6 @@ export const UpdateBotForm = ({
     const loadingToast = toast.loading("Adding information...");
 
     try {
-      // Use decrypted API key
       const response = await fetch("http://127.0.0.1:5001/api/add-to-bot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,7 +87,7 @@ export const UpdateBotForm = ({
             formData.details
           }`,
           provider_name: botConfig?.provider || "google",
-          api_key: botConfig?.apiKey || "", // Use decrypted key
+          api_key: botConfig?.apiKey || "",
         }),
       });
 

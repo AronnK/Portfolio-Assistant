@@ -74,7 +74,7 @@ export const SectionCard = ({
               isDark ? "text-gray-100" : "text-slate-900"
             }`}
           >
-            {sectionTitle.toLowerCase()}
+            {sectionTitle.toLowerCase().replace("_", " ")}
           </h3>
           <div
             className={`ml-auto px-3 py-1 rounded-full text-xs font-medium ${
@@ -83,24 +83,27 @@ export const SectionCard = ({
                 : "bg-slate-100/50 text-slate-600"
             }`}
           >
-            {items.length} {items.length === 1 ? "item" : "items"}
+            {Array.isArray(items)
+              ? `${items.length} ${items.length === 1 ? "item" : "items"}`
+              : "Details"}
           </div>
         </div>
 
         <div className="p-6 space-y-4">
-          {items.map((item, index) => (
-            <EnrichmentItem
-              key={`${sectionTitle}-${index}`}
-              item={item}
-              itemKey={`${sectionTitle}-${index}`}
-              index={index}
-              enrichments={enrichments}
-              focusedField={focusedField}
-              onEnrichmentChange={onEnrichmentChange}
-              onFocusChange={onFocusChange}
-              isDark={isDark}
-            />
-          ))}
+          {Array.isArray(items) &&
+            items.map((item, index) => (
+              <EnrichmentItem
+                key={`${sectionTitle}-${index}`}
+                item={item}
+                itemKey={`${sectionTitle}-${index}`}
+                index={index}
+                enrichments={enrichments}
+                focusedField={focusedField}
+                onEnrichmentChange={onEnrichmentChange}
+                onFocusChange={onFocusChange}
+                isDark={isDark}
+              />
+            ))}
         </div>
       </GlassCard>
     </motion.div>

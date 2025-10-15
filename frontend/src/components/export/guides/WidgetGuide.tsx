@@ -51,7 +51,7 @@ export const WidgetGuide = ({
         <GuideStep
           stepNumber={2}
           title="Add to Your Website"
-          description="Paste this code just before the closing </body> tag"
+          description="Paste this code just before the closing body tag"
           isDark={isDark}
           delay={0.1}
         >
@@ -60,7 +60,7 @@ export const WidgetGuide = ({
               isDark ? "text-gray-400" : "text-slate-600"
             }`}
           >
-            <li>• Open your website's HTML or theme editor</li>
+            <li>• Open your website&apos;s HTML or theme editor</li>
             <li>• Scroll to the bottom of the page</li>
             <li>
               • Find the closing{" "}
@@ -68,7 +68,9 @@ export const WidgetGuide = ({
                 className={`px-2 py-0.5 rounded ${
                   isDark ? "bg-slate-800" : "bg-slate-200"
                 }`}
-              >{`</body>`}</code>{" "}
+              >
+                &lt;/body&gt;
+              </code>{" "}
               tag
             </li>
             <li>• Paste the widget code just above it</li>

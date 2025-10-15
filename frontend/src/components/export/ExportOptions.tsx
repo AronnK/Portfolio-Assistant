@@ -1,7 +1,8 @@
 "use client";
 import { motion } from "framer-motion";
-import { Key, Code, Puzzle, Zap, Check } from "lucide-react";
+import { Key, Code, Puzzle, Zap, Check, LucideProps } from "lucide-react";
 import { ExportType } from "./ExportModal";
+import { ComponentType } from "react";
 
 interface ExportOptionsProps {
   onSelect: (type: ExportType) => void;
@@ -10,7 +11,7 @@ interface ExportOptionsProps {
 
 interface ExportOption {
   type: ExportType;
-  icon: any;
+  icon: ComponentType<LucideProps>;
   title: string;
   description: string;
   features: string[];
@@ -28,7 +29,6 @@ const options: ExportOption[] = [
       "Use your Google/OpenAI/Groq API key",
       "Full control over AI model",
       "No monthly subscription",
-      "Direct API integration",
     ],
     difficulty: "Easy",
     badge: "Recommended",
@@ -41,7 +41,6 @@ const options: ExportOption[] = [
     features: [
       "Copy & paste HTML code",
       "Works on any website",
-      "Responsive design",
       "No coding knowledge needed",
     ],
     difficulty: "Easy",
@@ -55,7 +54,6 @@ const options: ExportOption[] = [
       "Small bubble in corner",
       "Expands when clicked",
       "Customizable colors",
-      "Professional look",
     ],
     difficulty: "Easy",
   },
@@ -67,7 +65,6 @@ const options: ExportOption[] = [
     features: [
       "Full API access",
       "Build custom interfaces",
-      "Mobile app integration",
       "Complete flexibility",
     ],
     difficulty: "Advanced",

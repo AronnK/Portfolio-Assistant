@@ -22,6 +22,8 @@ export const CodeBlock = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  console.log(language);
+
   return (
     <div className="relative">
       <div className={`absolute top-2 right-2 z-10`}>

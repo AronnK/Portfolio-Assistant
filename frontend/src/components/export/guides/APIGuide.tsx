@@ -2,7 +2,6 @@
 import { GuideStep } from "../shared/GuideStep";
 import { CodeBlock } from "../shared/CodeBlock";
 import { WarningBanner } from "../shared/WarningBanner";
-import { ExternalLink } from "../shared/ExternalLink";
 
 interface APIGuideProps {
   tempCollectionName: string;

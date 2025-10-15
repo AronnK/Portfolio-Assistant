@@ -27,9 +27,7 @@ export default function HomePage() {
     }
   }, [user, authLoading, router]);
 
-  const handleResumeProcessed = (data: any, file: File) => {
-    // Save to context/localStorage
-    // Then navigate to enrich page
+  const handleResumeProcessed = () => {
     router.push("/home/enrich");
   };
 

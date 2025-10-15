@@ -11,8 +11,9 @@ import {
   BookOpen,
   Sparkles,
 } from "lucide-react";
+import { ComponentType } from "react";
 
-const sectionIcons: Record<string, any> = {
+const sectionIcons: Record<string, ComponentType<{ className: string }>> = {
   education: GraduationCap,
   experience: Briefcase,
   projects: Code,

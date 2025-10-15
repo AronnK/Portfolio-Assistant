@@ -17,7 +17,9 @@ export const ExistingBotCard = ({
   onUpdate,
   onViewBot,
 }: ExistingBotCardProps) => {
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "N/A";
+
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",

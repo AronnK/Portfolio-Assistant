@@ -31,6 +31,7 @@ export const UpdateBotForm = ({
     details: "",
     type: "project",
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [botConfig, setBotConfig] = useState<{
     provider: string;
@@ -78,9 +79,12 @@ export const UpdateBotForm = ({
     e.preventDefault();
     setIsSubmitting(true);
     const loadingToast = toast.loading("Adding information...");
+    const BACKEND_URL =
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "https://portfolio-assistant-1ash.onrender.com";
 
     try {
-      const response = await fetch("http://127.0.0.1:5001/api/add-to-bot", {
+      const response = await fetch(`${BACKEND_URL}/api/add-to-bot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

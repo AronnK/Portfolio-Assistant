@@ -23,6 +23,9 @@ export const ResumeDropzone = ({
   const [uploadStatus, setUploadStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
+  const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    "https://portfolio-assistant-1ash.onrender.com";
 
   const handleFileUpload = async (file: File) => {
     if (!file.type.includes("pdf")) {
@@ -37,7 +40,7 @@ export const ResumeDropzone = ({
       const formData = new FormData();
       formData.append("resume", file);
 
-      const response = await fetch("http://127.0.0.1:5001/api/parse-resume", {
+      const response = await fetch(`${BACKEND_URL}/api/parse-resume`, {
         method: "POST",
         body: formData,
       });

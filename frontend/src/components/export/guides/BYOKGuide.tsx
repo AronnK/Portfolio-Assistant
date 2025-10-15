@@ -60,6 +60,10 @@ export const BYOKGuide = ({
     },
   };
 
+  const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    "https://portfolio-assistant-1ash.onrender.com";
+
   const handleActivate = async () => {
     if (!apiKey.trim()) {
       toast.error("Please enter your API key");
@@ -70,19 +74,16 @@ export const BYOKGuide = ({
     const loadingToast = toast.loading("Activating your bot...");
 
     try {
-      const response = await fetch(
-        "http://127.0.0.1:5001/api/collections/finalize",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            temp_collection_name: tempCollectionName,
-            permanent_collection_name: `prod_${tempCollectionName}`,
-            provider_name: provider,
-            api_key: apiKey,
-          }),
-        }
-      );
+      const response = await fetch(`${BACKEND_URL}/api/collections/finalize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          temp_collection_name: tempCollectionName,
+          permanent_collection_name: `prod_${tempCollectionName}`,
+          provider_name: provider,
+          api_key: apiKey,
+        }),
+      });
 
       if (!response.ok) throw new Error("Failed to finalize collection");
 

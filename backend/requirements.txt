@@ -4,3 +4,8 @@ tqdm
 python-dotenv
 langchain
 google-generativeai
+Flask
+Flask-Cors
+openai
+groq
+gunicorn

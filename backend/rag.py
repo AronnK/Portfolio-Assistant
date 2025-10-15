@@ -13,7 +13,14 @@ class Rag:
         
         genai.configure(api_key=api_key)
 
-        self.chroma_client = chromadb.Client()
+        self.chroma_client = chromadb.Client() #dummy (local db)
+
+        # self.chroma_client = chromadb.CloudClient(
+        #     tenant=os.getenv("CHROMA_TENANT"),
+        #     database=os.getenv("CHROMA_DATABASE"),
+        #     api_key=os.getenv("CHROMA_API_KEY")
+        # ) #prod stuff
+        
         self.collection = self.chroma_client.get_or_create_collection(name=collection_name)
 
         self.embedding_model = os.getenv("GOOGLE_EMBEDDING_MODEL", "gemini-embedding-001")

@@ -58,7 +58,7 @@ export const ChatPreview: FC<ChatPreviewProps> = ({
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL ||
-    "https://portfolio-assistant-1ash.onrender.com";
+    "https://portfolio-assistant-1ush.onrender.com";
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

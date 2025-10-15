@@ -81,7 +81,7 @@ export const UpdateBotForm = ({
     const loadingToast = toast.loading("Adding information...");
     const BACKEND_URL =
       process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "https://portfolio-assistant-1ash.onrender.com";
+      "https://portfolio-assistant-1ush.onrender.com";
 
     try {
       const response = await fetch(`${BACKEND_URL}/api/add-to-bot`, {

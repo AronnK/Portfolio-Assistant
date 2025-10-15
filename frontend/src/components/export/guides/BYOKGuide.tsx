@@ -62,7 +62,7 @@ export const BYOKGuide = ({
 
   const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL ||
-    "https://portfolio-assistant-1ash.onrender.com";
+    "https://portfolio-assistant-1ush.onrender.com";
 
   const handleActivate = async () => {
     if (!apiKey.trim()) {
